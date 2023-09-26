@@ -17,7 +17,7 @@ Game.inventory.seeds = Object();
 
 Game.plants = Object();
 
-Game.plants.wheat = () => {return new Plant("Wheat", 5);};
+Game.plants.wheat = () => {return new Plant("Wheat", 5, 2);};
 
 Game.regesterClick = function(obj) {
     console.log("clicked:");
@@ -80,11 +80,11 @@ class Cell {
 
         if(!this.plant) return;
 
+        this.plant.harvest();
+
         this.plant = undefined;
         this.div.style = "background-color: white";
         this.div.innerHTML = "";
-
-        Game.inventory.seeds.wheat += 2;
 
     }// harvest()
 
@@ -124,7 +124,7 @@ class Cell {
 
 class Plant {
 
-    constructor(name, growTimeTicks) {
+    constructor(name, growTimeTicks, seedYield) {
 
         this.name = name;
         this.growTimeTicks = growTimeTicks;
@@ -133,11 +133,18 @@ class Plant {
 
         this.tickAge = 0;
 
+        this.seedYield = seedYield;
+
     }// constructor
 
     harvest() {
 
-
+        if(this.state == 'mature') {
+            Game.inventory.seeds.wheat += this.seedYield;
+        }
+        else if(this.state == 'seed') {
+            Game.inventory.seeds.wheat += 1;
+        }
 
     }// harvest()
 
