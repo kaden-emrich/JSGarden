@@ -1,3 +1,10 @@
+const GENES = [
+    'x',
+    'y',
+    'g',
+    's'
+];
+
 var Game = Object();
 
 Game.garden = Object();
@@ -20,8 +27,6 @@ Game.plants = Object();
 Game.plants.wheat = () => {return new Plant("Wheat", 5, 2);};
 
 Game.regesterClick = function(obj) {
-    console.log("clicked:");
-    console.log(obj);
     obj.onClick();
 }// Game.regesterClick(obj)
 
@@ -46,12 +51,19 @@ class Cell {
     updatePlant() {
         if(!this.plant) return;
 
-        this.div.innerHTML = this.plant.name + '<br>';
+        this.div.innerHTML = this.plant.name + "<br>";
+        this.div.innerHTML += this.plant.genesToString() + "<br>";
 
         if(this.plant.state == 'seed') {
 
             this.div.style = "background-color: yellow;";
             this.div.innerHTML += this.plant.growTimeTicks - this.plant.tickAge + 1;
+
+        }
+        else if(this.plant.state == 'mutate') {
+
+            this.div.style = "background-color: blue";
+            this.mutatePlant();
 
         }
         else if(this.plant.state == 'mature') {
@@ -67,6 +79,91 @@ class Cell {
         }
 
     }// updatePlant()
+
+    mutatePlant() {
+
+        if(!this.plant) return;
+    
+        // get other gene sets
+        var otherGenes = [this.plant.genes];
+
+        for(let x = -1; x < 2; x++) {
+
+            if(this.x + x >= 0 && this.x + x < Game.garden.rows) {
+
+                for(let y = -1; y < 2; y++) {
+
+                    if(this.y + y >= 0 && this.y + y < Game.garden.collums) {
+
+                        var otherCell = Game.garden.cells[this.x + x][this.y + y];
+
+                        if(otherCell.plant) {
+
+                            otherGenes[otherGenes.length] = otherCell.plant.genes;
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        // calculate new gene
+
+        var newGenes = this.plant.genes;
+
+        if(otherGenes.length < 1) return;
+
+        for(let i = 0; i < this.plant.genes; i++) {
+
+            var geneWeights = Array();
+
+            for(let j = 0; j < GENES.length; j++) {
+
+                geneWeights[j] = 0;
+
+            }
+
+            for(let j = 0; j < otherGenes.length; j++) {
+
+                var thisGene = otherGenes[j][i];
+
+                for(let g = 0; g < GENES.length; g++) {
+
+                    if(thisGene == GENES[g]) {
+                        geneWeights[g] ++;
+                    }
+
+                }
+
+            }
+
+            var highestWeight = 0;
+            var highestGene = newGenes[i];
+
+            for(let j = 0; j < geneWeights.length; j++) {
+
+                if(geneWeights[j] > highestWeight) {
+
+                    highestWeight = geneWeights[j];
+                    highestGene = GENES[j];
+
+                }
+
+            }
+
+            newGenes[i] = highestGene;
+
+        }
+
+        console.log(newGenes);
+
+        this.plant.genes = newGenes;
+
+    }// mutatePlant()
 
     addPlant(plant) {
 
@@ -124,25 +221,61 @@ class Cell {
 
 class Plant {
 
-    constructor(name, growTimeTicks, seedYield) {
+    constructor(name, growTimeTicks, seedYield, genes) {
 
         this.name = name;
+
+        this.baseGrowTimeTicks = growTimeTicks;
         this.growTimeTicks = growTimeTicks;
 
         this.state = 'seed';
 
         this.tickAge = 0;
 
+        this.baseYield = seedYield;
         this.seedYield = seedYield;
 
+        if(genes) this.genes = genes;
+        else {
+
+            this.genes = Array();
+
+            for(let i = 0; i < 5; i++) {
+                this.genes[i] = GENES[rng(0, GENES.length)];
+
+                if(this.genes[i] == 'y') {
+                    this.seedYield++;
+                }
+                if(this.genes[i] == 'g') {
+                    this.growTimeTicks--;
+                }
+                if(this.genes[i] == 's') {
+                    this.growTimeTicks++;
+                }
+            }
+
+        }
+
     }// constructor
+
+    genesToString() {
+
+        var geneString = "";
+
+        for(let i = 0; i < this.genes.length; i++) {
+            geneString += this.genes[i];
+        }
+
+        return geneString;
+
+    }
 
     harvest() {
 
         if(this.state == 'mature') {
             Game.inventory.seeds.wheat += this.seedYield;
         }
-        else if(this.state == 'seed') {
+        else {
             Game.inventory.seeds.wheat += 1;
         }
 
@@ -150,9 +283,14 @@ class Plant {
 
     tick() {
 
-        if(this.tickAge >= this.growTimeTicks && this.state == 'seed') {
+        if(this.tickAge > this.growTimeTicks) {
 
             this.state = 'mature';
+
+        }
+        else if(this.tickAge == this.growTimeTicks) {
+
+            this.state = 'mutate';
 
         }
 
