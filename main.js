@@ -2,12 +2,18 @@ var Game = Object();
 
 Game.garden = Object();
 
+Game.garden.div = document.getElementById("garden-div");
+
+Game.infoBox = document.getElementById("info");
+
 Game.garden.rows = 3;
 Game.garden.collums = 3;
 
-Game.garden.div = document.getElementById("garden-div");
-
 Game.garden.cells = Array();
+
+Game.inventory = Object();
+
+Game.inventory.seeds = Object();
 
 Game.plants = Object();
 
@@ -37,20 +43,20 @@ class Cell {
 
     }// constructor
 
-    addPlant(plant) {
+    updatePlant() {
+        if(!this.plant) return;
 
-        this.plant = plant;
+        this.div.innerHTML = this.plant.name + '<br>';
 
         if(this.plant.state == 'seed') {
 
             this.div.style = "background-color: yellow;";
-            this.div.innerHTML = this.plant.growTimeTicks - this.plant.tickAge + 1;
+            this.div.innerHTML += this.plant.growTimeTicks - this.plant.tickAge + 1;
 
         }
         else if(this.plant.state == 'mature') {
 
             this.div.style = "background-color: green";
-            this.div.innerHTML = "";
 
         }
         else {
@@ -60,22 +66,47 @@ class Cell {
 
         }
 
+    }// updatePlant()
+
+    addPlant(plant) {
+
+        this.plant = plant;
+
+        this.updatePlant();
+
     }// addPlant()
+
+    harvest() {
+
+        if(!this.plant) return;
+
+        this.plant = undefined;
+        this.div.style = "background-color: white";
+        this.div.innerHTML = "";
+
+        Game.inventory.seeds.wheat += 2;
+
+    }// harvest()
 
     onClick() {
 
         if(this.plant) {
 
-            this.plant = undefined;
-            this.div.style = "background-color: white";
-            this.div.innerHTML = "";
+            
+            this.harvest();
+            
 
         }
         else {
 
-            this.addPlant(Game.plants.wheat());
+            if(Game.inventory.seeds.wheat > 0) {
+                this.addPlant(Game.plants.wheat());
+                Game.inventory.seeds.wheat -= 1;
+            } 
 
         }
+
+        Game.update();
     
     }// onClick()
 
@@ -85,24 +116,7 @@ class Cell {
 
         this.plant.tick();
 
-        if(this.plant.state == 'seed') {
-
-            this.div.style = "background-color: yellow;";
-            this.div.innerHTML = this.plant.growTimeTicks - this.plant.tickAge + 1;
-
-        }
-        else if(this.plant.state == 'mature') {
-
-            this.div.style = "background-color: green";
-            this.div.innerHTML = "";
-
-        }
-        else {
-
-            this.div.style = "background-color: white";
-            this.div.innerHTML = "";
-
-        }
+        this.updatePlant();
 
     }// tick()
 
@@ -183,9 +197,15 @@ Game.garden.tick = function() {
 
 }// Game.garden.tick()
 
+Game.update = function() {
+    Game.infoBox.innerText = "Wheat seeds: " + Game.inventory.seeds.wheat;
+}
+
 Game.tick = function() {
 
     Game.garden.tick();
+
+    Game.update();
 
 }// Game.tick()
 
@@ -194,6 +214,10 @@ Game.init = function() {
     Game.garden.setup();
 
     Game.tickInterval = setInterval(Game.tick, 1000);
+
+    Game.inventory.seeds.wheat = 1;
+
+    Game.tick();
 
 }// game.init()
 

@@ -4,6 +4,12 @@ body {
     font-family: monospace;
 }
 
+#info {
+    border: 1px solid grey;
+    margin-top: 10px;
+    width: fit-content;
+}
+
 .garden-table {
     margin: 0;
     padding: 0;
