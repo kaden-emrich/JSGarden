@@ -29,3 +29,11 @@ body {
     width: 100px;
     height: 100px;
 }
+
+.inv-seed {
+    background-color: white;
+}
+
+#inv-seed-selected {
+    background-color: green;
+}

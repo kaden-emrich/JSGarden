@@ -1,8 +1,8 @@
 const GENES = [
-    'x',
-    'y',
-    'g',
-    's'
+    'X',
+    'Y',
+    'G',
+    'S'
 ];
 
 var Game = Object();
@@ -20,11 +20,11 @@ Game.garden.cells = Array();
 
 Game.inventory = Object();
 
-Game.inventory.seeds = Object();
+Game.inventory.seeds = Array();
 
-Game.plants = Object();
+Game.species = Object();
 
-Game.plants.wheat = () => {return new Plant("Wheat", 5, 2);};
+Game.selected = undefined;
 
 Game.regesterClick = function(obj) {
     obj.onClick();
@@ -51,8 +51,8 @@ class Cell {
     updatePlant() {
         if(!this.plant) return;
 
-        this.div.innerHTML = this.plant.name + "<br>";
-        this.div.innerHTML += this.plant.genesToString() + "<br>";
+        this.div.innerHTML = this.plant.getID() + "<br>";
+        //this.div.innerHTML += this.plant.genesToString() + "<br>";
 
         if(this.plant.state == 'seed') {
 
@@ -85,19 +85,19 @@ class Cell {
         if(!this.plant) return;
     
         // get other gene sets
-        var otherGenes = [this.plant.genes];
+        var otherGenes = Array();
 
         for(let x = -1; x < 2; x++) {
 
-            if(this.x + x >= 0 && this.x + x < Game.garden.rows) {
+            if(this.x + x >= 0 && this.x + x < Game.garden.collums) {
 
                 for(let y = -1; y < 2; y++) {
 
-                    if(this.y + y >= 0 && this.y + y < Game.garden.collums) {
+                    if(this.y + y >= 0 && this.y + y < Game.garden.rows) {
 
                         var otherCell = Game.garden.cells[this.x + x][this.y + y];
 
-                        if(otherCell.plant) {
+                        if(otherCell.plant && otherCell.plant.name == this.plant.name) {
 
                             otherGenes[otherGenes.length] = otherCell.plant.genes;
 
@@ -115,9 +115,9 @@ class Cell {
 
         var newGenes = this.plant.genes;
 
-        if(otherGenes.length < 1) return;
+        if(otherGenes.length < 3) return;
 
-        for(let i = 0; i < this.plant.genes; i++) {
+        for(let i = 0; i < newGenes.length; i++) {
 
             var geneWeights = Array();
 
@@ -143,8 +143,13 @@ class Cell {
 
             var highestWeight = 0;
             var highestGene = newGenes[i];
+            var currentGeneWeight = 0;
 
             for(let j = 0; j < geneWeights.length; j++) {
+
+                if(GENES[j] == newGenes[i]) {
+                    currentGeneWeight = geneWeights[j];
+                }
 
                 if(geneWeights[j] > highestWeight) {
 
@@ -155,7 +160,10 @@ class Cell {
 
             }
 
-            newGenes[i] = highestGene;
+
+            if(highestWeight > currentGeneWeight) {
+                newGenes[i] = highestGene;
+            }
 
         }
 
@@ -189,16 +197,14 @@ class Cell {
 
         if(this.plant) {
 
-            
             this.harvest();
             
-
         }
-        else {
+        else if(Game.selected) {
 
-            if(Game.inventory.seeds.wheat > 0) {
-                this.addPlant(Game.plants.wheat());
-                Game.inventory.seeds.wheat -= 1;
+            if(Game.selected.num > 0) {
+                this.addPlant(Game.selected.plantSeed());
+                Game.selected.num -= 1;
             } 
 
         }
@@ -221,21 +227,22 @@ class Cell {
 
 class Plant {
 
-    constructor(name, growTimeTicks, seedYield, genes) {
+    constructor(seed) {
 
-        this.name = name;
+        this.seed = seed;
 
-        this.baseGrowTimeTicks = growTimeTicks;
-        this.growTimeTicks = growTimeTicks;
+        this.name = this.seed.name;
+
+        this.baseGrowTimeTicks = this.seed.BaseGrowTimeTicks;
+        this.growTimeTicks = this.seed.growTimeTicks;
 
         this.state = 'seed';
 
         this.tickAge = 0;
 
-        this.baseYield = seedYield;
-        this.seedYield = seedYield;
+        this.baseYield = this.seed.baseYield;
 
-        if(genes) this.genes = genes;
+        if(this.seed.genes) this.genes = this.seed.genes;
         else {
 
             this.genes = Array();
@@ -243,13 +250,10 @@ class Plant {
             for(let i = 0; i < 5; i++) {
                 this.genes[i] = GENES[rng(0, GENES.length)];
 
-                if(this.genes[i] == 'y') {
-                    this.seedYield++;
-                }
-                if(this.genes[i] == 'g') {
+                if(this.genes[i] == 'G') {
                     this.growTimeTicks--;
                 }
-                if(this.genes[i] == 's') {
+                if(this.genes[i] == 'S') {
                     this.growTimeTicks++;
                 }
             }
@@ -273,10 +277,46 @@ class Plant {
     harvest() {
 
         if(this.state == 'mature') {
-            Game.inventory.seeds.wheat += this.seedYield;
+
+            var overalYield = 0;
+
+            overalYield += this.baseYield;
+
+            for(let i = 0; i < this.genes.length; i++) {
+                if(this.genes[i] == 'Y') {
+                    overalYield += 1;
+                }
+            }
+
+            if(!this.seed.genes) {
+
+                var seedExists = false;
+
+                for(let i = 0; i < Game.inventory.seeds.length; i++) {
+                    
+                    if(Game.inventory.seeds[i].name == this.name && Game.inventory.seeds[i].genesToString() == this.genesToString()) {
+
+                        this.seed = Game.inventory.seeds[i];
+                        seedExists = true;
+                        continue;
+
+                    }
+
+                }
+
+                if(!seedExists) {
+                    this.seed = new Seed(this.seed.species, this.genes);
+                }
+                
+            }
+
+            this.seed.num += overalYield;
+
         }
         else {
-            Game.inventory.seeds.wheat += 1;
+
+            this.seed.species.pureSeed.num += 1;
+
         }
 
     }// harvest()
@@ -297,7 +337,114 @@ class Plant {
         this.tickAge++;
     }// tick()
 
+    getID() {
+
+        var id = this.name;
+
+        if(this.genes) {
+            id += '-';
+
+            for(let i = 0; i < this.genes.length; i++) {
+
+                id += this.genes[i];
+
+            }
+        }
+
+        return id;
+
+    }
+
 }// class Plant
+
+class Seed {
+
+    constructor(species, genes) {
+
+        this.idNum = Game.inventory.seeds.length;
+
+        Game.inventory.seeds[this.idNum] = this;
+
+        this.species = species;
+
+        this.name = this.species.name;
+
+        this.button = undefined;
+
+        this.baseGrowTimeTicks = this.species.growTimeTicks;
+        this.growTimeTicks = this.species.growTimeTicks;
+
+        this.baseYield = this.species.harvestYield;
+
+        this.isSelected = false;
+
+        this.num = 0;
+
+        if(genes) {
+            this.genes = genes;
+        }
+        else {
+            this.genes = undefined;
+        }
+    }
+
+    plantSeed() {
+
+        return new Plant(this);
+
+    }
+
+    genesToString() {
+
+        if(!this.genes) {
+            return "";
+        }
+
+        var geneString = "";
+
+        for(let i = 0; i < this.genes.length; i++) {
+            geneString += this.genes[i];
+        }
+
+        return geneString;
+
+    }
+
+    getID() {
+
+        var id = this.name;
+
+        if(this.genes) {
+            id += '-';
+
+            for(let i = 0; i < this.genes.length; i++) {
+
+                id += this.genes[i];
+
+            }
+        }
+
+        return id;
+
+    }
+
+}
+
+class Species {
+
+    constructor(name, growTimeTicks, harvestYield) {
+
+        this.name = name;
+        this.growTimeTicks = growTimeTicks;
+        this.harvestYield = harvestYield;
+
+        this.pureSeed = new Seed(this);
+
+    }
+    
+}
+
+Game.species.wheat = new Species("Wheat", 5, 2);
 
 Game.garden.setup = function() {
 
@@ -342,8 +489,76 @@ Game.garden.tick = function() {
 
 }// Game.garden.tick()
 
+Game.inventory.regesterButtonPress = function(element, idNum) {
+
+    if(Game.inventory.seeds[idNum].isSelected) {
+        
+        Game.selected = undefined;
+        Game.inventory.seeds[idNum].isSelected = false;
+        Game.inventory.seeds[idNum].button.removeAttribute('id');
+
+    }
+    else {
+
+        Game.selected = Game.inventory.seeds[idNum];
+        Game.inventory.seeds[idNum].isSelected = true;
+        Game.inventory.seeds[idNum].button.setAttribute('id', "inv-seed-selected");
+
+    }
+
+    Game.inventory.update();
+
+}
+
+Game.inventory.update = function() {
+
+    while(Game.infoBox.hasChildNodes()) {
+
+        Game.infoBox.removeChild(Game.infoBox.firstChild);
+
+    }
+
+    for(let i = 0; i < Game.inventory.seeds.length; i++) {
+
+        if(Game.inventory.seeds[i].num < 1) {
+
+            Game.inventory.seeds[i].isSelected = false;
+
+            if(Game.selected == Game.inventory.seeds[i]) {
+                Game.selected = undefined;
+            }
+
+            continue;
+
+        }
+
+        Game.inventory.seeds[i].button = document.createElement('button');
+
+        Game.inventory.seeds[i].button.setAttribute('class', "inv-seed");
+
+        if(Game.selected == Game.inventory.seeds[i]) {
+            Game.inventory.seeds[i].button.setAttribute('id', "inv-seed-selected");
+            Game.inventory.seeds[i].isSelected = true;
+        }
+        else {
+            Game.inventory.seeds[i].isSelected = false;
+        }
+
+        Game.inventory.seeds[i].button.setAttribute('onclick', 'Game.inventory.regesterButtonPress(this, ' + Game.inventory.seeds[i].idNum + ')');
+
+        Game.inventory.seeds[i].button.innerText = Game.inventory.seeds[i].getID() + ": " + Game.inventory.seeds[i].num;
+
+        Game.infoBox.appendChild(Game.inventory.seeds[i].button);
+
+        Game.infoBox.appendChild(document.createElement('br'));
+
+    }
+}
+
 Game.update = function() {
-    Game.infoBox.innerText = "Wheat seeds: " + Game.inventory.seeds.wheat;
+
+    Game.inventory.update();
+
 }
 
 Game.tick = function() {
@@ -360,7 +575,11 @@ Game.init = function() {
 
     Game.tickInterval = setInterval(Game.tick, 1000);
 
-    Game.inventory.seeds.wheat = 1;
+    //Game.inventory.seeds[Game.seeds.wheat.idNum] = Game.seeds.wheat;
+
+    Game.inventory.seeds[0].num = 1;
+
+    //Game.selected = Game.inventory.seeds[0];
 
     Game.tick();
 
