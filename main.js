@@ -113,11 +113,14 @@ class Cell {
 
         // calculate new gene
 
-        var newGenes = this.plant.genes;
+        let newGenes = Array();
+        let geneString = "";
 
         if(otherGenes.length < 3) return;
 
-        for(let i = 0; i < newGenes.length; i++) {
+        for(let i = 0; i < this.plant.genes.length; i++) {
+
+            newGenes[i] = this.plant.genes[i];
 
             var geneWeights = Array();
 
@@ -165,9 +168,27 @@ class Cell {
                 newGenes[i] = highestGene;
             }
 
+            geneString += newGenes[i];
+
         }
 
-        console.log(newGenes);
+        var seedExists = false;
+
+        for(let i = 0; i < Game.inventory.seeds.length; i++) {
+            
+            if(Game.inventory.seeds[i].name == this.plant.name && Game.inventory.seeds[i].genesToString() == geneString) {
+
+                this.plant.seed = Game.inventory.seeds[i];
+                seedExists = true;
+                break;
+
+            }
+
+        }
+
+        if(!seedExists) {
+            this.plant.seed = new Seed(this.plant.seed.species, newGenes);
+        }
 
         this.plant.genes = newGenes;
 
