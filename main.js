@@ -18,6 +18,8 @@ Game.garden.collums = 3;
 
 Game.dnaLength = 5;
 
+Game.xWeight = 2.1;
+
 Game.garden.cells = Array();
 
 Game.inventory = Object();
@@ -118,7 +120,7 @@ class Cell {
         let newGenes = Array();
         let geneString = "";
 
-        if(otherGenes.length < 3) return;
+        if(otherGenes.length < 2) return;
 
         for(let i = 0; i < this.plant.genes.length; i++) {
 
@@ -139,7 +141,12 @@ class Cell {
                 for(let g = 0; g < GENES.length; g++) {
 
                     if(thisGene == GENES[g]) {
-                        geneWeights[g] ++;
+                        if(thisGene == 'X') {
+                            geneWeights[g] += Game.xWeight;
+                        }
+                        else {
+                            geneWeights[g] += 1;
+                        }
                     }
 
                 }
@@ -150,9 +157,15 @@ class Cell {
             var highestGene = newGenes[i];
             var currentGeneWeight = 0;
 
+            
+
             for(let j = 0; j < geneWeights.length; j++) {
 
                 if(GENES[j] == newGenes[i]) {
+                    if(GENES[j] == 'X') {
+                        geneWeights[j] -= Game.xWeight;
+                    }
+
                     currentGeneWeight = geneWeights[j];
                 }
 
@@ -164,7 +177,6 @@ class Cell {
                 }
 
             }
-
 
             if(highestWeight > currentGeneWeight) {
                 newGenes[i] = highestGene;
