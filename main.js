@@ -16,6 +16,8 @@ Game.infoBox = document.getElementById("info");
 Game.garden.rows = 3;
 Game.garden.collums = 3;
 
+Game.dnaLength = 5;
+
 Game.garden.cells = Array();
 
 Game.inventory = Object();
@@ -268,17 +270,19 @@ class Plant {
 
             this.genes = Array();
 
-            for(let i = 0; i < 5; i++) {
+            for(let i = 0; i < Game.dnaLength; i++) {
                 this.genes[i] = GENES[rng(0, GENES.length)];
-
-                if(this.genes[i] == 'G') {
-                    this.growTimeTicks--;
-                }
-                if(this.genes[i] == 'S') {
-                    this.growTimeTicks++;
-                }
             }
 
+        }
+
+        for(let i = 0; i < Game.dnaLength; i++) {
+            if(this.genes[i] == 'G') {
+                this.growTimeTicks--;
+            }
+            if(this.genes[i] == 'S') {
+                this.growTimeTicks++;
+            }
         }
 
     }// constructor
@@ -607,3 +611,5 @@ Game.init = function() {
 }// game.init()
 
 Game.init();
+
+// maybe make the weight of the X gene higher to make geneswaping more straightforward and less reliant on the random genes when planting a blank seed
