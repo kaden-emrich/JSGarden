@@ -1,0 +1,39 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: monospace;
+}
+
+#info {
+    border: 1px solid grey;
+    margin-top: 10px;
+    width: fit-content;
+}
+
+.garden-table {
+    margin: 0;
+    padding: 0;
+    border-spacing: 0;
+}
+
+.garden-table td {
+    margin: 0;
+    padding: 0;
+    border: 1px solid black;
+    width: 100px;
+    height: 100px;
+}
+
+.garden-cell {
+    margin: 0;
+    width: 100px;
+    height: 100px;
+}
+
+.inv-seed {
+    background-color: white;
+}
+
+#inv-seed-selected {
+    background-color: green;
+}
