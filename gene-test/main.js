@@ -481,7 +481,7 @@ class Species {
     
 }
 
-Game.species.wheat = new Species("Wheat", 20, 2);
+Game.species.wheat = new Species("Wheat", 10, 2);
 
 Game.garden.setup = function() {
 
