@@ -268,7 +268,7 @@ class Plant {
 
         this.name = this.seed.name;
 
-        this.baseGrowTimeTicks = this.seed.BaseGrowTimeTicks;
+        this.baseGrowTimeTicks = this.seed.baseGrowTimeTicks;
         this.growTimeTicks = this.seed.growTimeTicks;
 
         this.state = 'seed';
@@ -290,10 +290,10 @@ class Plant {
 
         for(let i = 0; i < Game.dnaLength; i++) {
             if(this.genes[i] == 'G') {
-                this.growTimeTicks--;
+                this.growTimeTicks -= Math.floor(this.baseGrowTimeTicks * 0.15);
             }
             if(this.genes[i] == 'S') {
-                this.growTimeTicks++;
+                this.growTimeTicks += Math.floor(this.baseGrowTimeTicks * 0.2);
             }
         }
 
@@ -481,7 +481,7 @@ class Species {
     
 }
 
-Game.species.wheat = new Species("Wheat", 5, 2);
+Game.species.wheat = new Species("Wheat", 20, 2);
 
 Game.garden.setup = function() {
 
